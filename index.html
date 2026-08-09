@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 		<title>Страх и ненависть в Хэдлайнере</title>
 		<style>
 html, body, #canvas {
@@ -89,6 +91,64 @@ body {
 	text-align: center;
 	z-index: 1;
 }
+
+#orientation-lock {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+	background: radial-gradient(circle at 50% 35%, #102957 0%, #061128 52%, #020611 100%);
+	font-family: Arial, sans-serif;
+	text-align: center;
+}
+
+#orientation-panel {
+	width: min(88vw, 430px);
+	padding: 24px;
+	border: 2px solid #6f91c8;
+	border-radius: 28px;
+	background: rgba(3, 10, 25, .92);
+	box-shadow: 0 18px 60px rgba(0, 0, 0, .55);
+}
+
+#orientation-icon {
+	font-size: 58px;
+	line-height: 1;
+	color: #9fc5ff;
+}
+
+#orientation-title {
+	margin: 14px 0 8px;
+	font-size: 25px;
+	font-weight: 700;
+}
+
+#orientation-text {
+	margin: 0 0 18px;
+	color: #c7d5ec;
+	font-size: 16px;
+	line-height: 1.4;
+}
+
+#orientation-button {
+	min-height: 54px;
+	padding: 0 22px;
+	border: 2px solid #8db5ee;
+	border-radius: 22px;
+	color: #f5e4c5;
+	background: #173564;
+	font-size: 16px;
+	font-weight: 700;
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+	#orientation-lock { display: flex; }
+	#canvas, #status { visibility: hidden !important; }
+}
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
@@ -96,6 +156,14 @@ body {
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 	</head>
 	<body>
+		<div id="orientation-lock" role="dialog" aria-label="Горизонтальный режим">
+			<div id="orientation-panel">
+				<div id="orientation-icon">↻</div>
+				<div id="orientation-title">ПОВЕРНИТЕ ТЕЛЕФОН</div>
+				<p id="orientation-text">Игра работает горизонтально. Если экран не поворачивается, отключите блокировку ориентации.</p>
+				<button id="orientation-button" type="button">ВКЛЮЧИТЬ ГОРИЗОНТАЛЬНЫЙ РЕЖИМ</button>
+			</div>
+		</div>
 		<canvas id="canvas">
 			Your browser does not support the canvas tag.
 		</canvas>
@@ -112,9 +180,28 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":8488660,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":8489620,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
+
+async function requestLandscapeMode() {
+	const button = document.getElementById('orientation-button');
+	try {
+		if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+			await document.documentElement.requestFullscreen();
+		}
+	} catch (_) {}
+	try {
+		if (screen.orientation && screen.orientation.lock) {
+			await screen.orientation.lock('landscape');
+		}
+	} catch (_) {}
+	if (window.matchMedia('(orientation: portrait)').matches) {
+		button.textContent = 'ПОВЕРНИТЕ ТЕЛЕФОН ВРУЧНУЮ';
+	}
+}
+
+document.getElementById('orientation-button').addEventListener('click', requestLandscapeMode);
 
 (function () {
 	const statusOverlay = document.getElementById('status');
